@@ -79,6 +79,20 @@
                                 </property>
                             </object>
                         </child>
+                        <child>
+                            <object class="AdwActionRow">
+                                <property name="title" translatable="yes">Global Shortcuts</property>
+                                <property name="subtitle" translatable="yes">Configure global shortcuts in the system settings</property>
+                                <property name="use_underline">True</property>
+                                <property name="activatable-widget">global_shortcut_button</property>
+                                <child>
+                                    <object class="GtkButton" id="global_shortcut_button">
+                                        <property name="label" translatable="yes">Configure</property>
+                                        <property name="valign">center</property>
+                                    </object>
+                                </child>
+                            </object>
+                        </child>
                     </object>
                 </child>
                 <child>

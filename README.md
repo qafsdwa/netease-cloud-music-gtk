@@ -25,6 +25,7 @@
 - [x] Mpris2 绑定
 - [x] 播放列表
 - [x] 歌词
+- [x] 全局快捷键
 - [X] 桌面歌词(依赖于 [desktop-lyrics](https://github.com/tuberry/desktop-lyric) 或 osdlyrics)
 
 ## 运行依赖
@@ -114,6 +115,23 @@ ninja
 sudo ninja install
 ```
 
+## 全局快捷键
+> 通过 [XDG Desktop Portal](https://flatpak.github.io/xdg-desktop-portal/) 的 GlobalShortcuts 接口实现，无需额外依赖。在未实现该 portal 的桌面环境（如 GNOME）中自动降级，不影响正常使用。
+
+- 支持桌面：KDE Plasma（X11 / Wayland）
+- 默认键位：
+
+| 功能 | 快捷键 |
+| --- | --- |
+| 播放/暂停 | Ctrl + Alt + P |
+| 下一曲 | Ctrl + Alt + Right |
+| 上一曲 | Ctrl + Alt + Left |
+| 音量 + | Ctrl + Alt + Up |
+| 音量 - | Ctrl + Alt + Down |
+
+- 首次运行会弹出授权对话框，之后可在 **系统设置 → 快捷键**（KDE Plasma）中修改键位。
+- 从桌面环境的应用菜单启动程序时，快捷键会注册到程序自身的组件下；从终端等非桌面入口启动时，注册到的组件名取决于启动方式。
+
 ## FAQ
 1. 为什么后台运行时没有托盘图标?
 > 由于 GTK3 开始取消了托盘接口，所以目前不打算实现托盘功能。<br>
@@ -128,6 +146,10 @@ sudo ninja install
 > 点击播放栏的歌曲名称，便会复制歌曲链接等信息到剪贴板。
 5. 如何查看日志
 > 从终端启动程序，添加环境变量 RUST_LOG=debug 或 RUST_LOG=netease_cloud_music_gtk4。
+6. 全局快捷键不生效怎么办?
+> 程序通过 XDG Desktop Portal 注册全局快捷键，仅在桌面环境实现了 GlobalShortcuts portal（如 KDE Plasma）时可用，GNOME 等环境会静默降级。注册成功后若仍无法使用，请确认键位未被其它程序占用（可在 KDE 系统设置 → 快捷键中查看冲突），并在首次启动的授权对话框中选择允许。
+7. 已配置的快捷键会被清空吗?
+> 快捷键配置保存在 kglobalshortcutsrc 文件中，重新启动程序或登录系统后均会保留。若程序未正常运行，已注册的快捷键会保留在系统中，不会丢失。
 
 ## 截图
 ![](./screenshots/discover.png)

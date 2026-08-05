@@ -84,6 +84,7 @@ mod imp {
         pub stack_child: Arc<Mutex<LinkedList<(String, String)>>>,
         pub page_stack: OnceCell<PageStack>,
         pub tray_handle: RefCell<crate::gui::TrayHandle>,
+        pub global_shortcut: RefCell<crate::gui::GlobalShortcutHandle>,
         pub graceful_quitting: Cell<bool>,
 
         search_type: Cell<SearchType>,
@@ -562,6 +563,9 @@ impl NeteaseCloudMusicGtk4Window {
 
         // 启动系统托盘
         imp.tray_handle.borrow_mut().start(sender.clone());
+
+        // 启动全局快捷键
+        imp.global_shortcut.borrow_mut().start(sender.clone());
     }
 
     pub fn init_toplist(&self, list: Vec<TopList>) {
@@ -831,6 +835,20 @@ impl NeteaseCloudMusicGtk4Window {
 
     pub fn toggle_play_pause(&self) {
         self.imp().player_controls.get().toggle_play_pause();
+    }
+
+    pub fn volume_up(&self) {
+        let volume = self.imp().player_controls.get().property::<f64>("volume") + 0.1;
+        self.imp().player_controls.get().set_volume(volume.min(1.0));
+    }
+
+    pub fn volume_down(&self) {
+        let volume = self.imp().player_controls.get().property::<f64>("volume") - 0.1;
+        self.imp().player_controls.get().set_volume(volume.max(0.0));
+    }
+
+    pub fn configure_global_shortcuts(&self) -> bool {
+        self.imp().global_shortcut.borrow().configure()
     }
 
     pub fn play_prev(&self) {

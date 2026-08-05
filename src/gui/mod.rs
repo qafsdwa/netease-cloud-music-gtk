@@ -5,6 +5,7 @@
 //
 
 mod discover;
+mod global_shortcut;
 mod my_page;
 mod player_controls;
 mod playlist_lyrics;
@@ -22,6 +23,7 @@ mod toplist;
 mod user_menus;
 
 pub use discover::*;
+pub use global_shortcut::*;
 pub use my_page::*;
 pub use player_controls::*;
 pub use playlist_lyrics::*;

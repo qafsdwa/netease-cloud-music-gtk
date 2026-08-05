@@ -4,10 +4,14 @@
 // Distributed under terms of the GPL-3.0-or-later license.
 //
 
+use async_channel::Sender;
 use gio::Settings;
+use glib::clone;
 use gtk::gio::SettingsBindFlags;
 use gtk::{glib, prelude::*, subclass::prelude::*, CompositeTemplate, *};
 use once_cell::sync::OnceCell;
+
+use crate::application::Action;
 
 glib::wrapper! {
     pub struct NeteaseCloudMusicGtk4Preferences(ObjectSubclass<imp::NeteaseCloudMusicGtk4Preferences>)
@@ -16,8 +20,10 @@ glib::wrapper! {
 }
 
 impl NeteaseCloudMusicGtk4Preferences {
-    pub fn new() -> Self {
-        glib::Object::new()
+    pub fn new(sender: Sender<Action>) -> Self {
+        let obj: Self = glib::Object::new();
+        obj.imp().sender.set(sender).expect("Could not set sender.");
+        obj
     }
 
     fn setup_settings(&self) {
@@ -30,6 +36,19 @@ impl NeteaseCloudMusicGtk4Preferences {
 
     fn settings(&self) -> &Settings {
         self.imp().settings.get().expect("Could not get settings.")
+    }
+
+    fn setup_global_shortcuts(&self) {
+        let button = self.imp().global_shortcut_button.get();
+        button.connect_clicked(clone!(
+            #[strong(rename_to = prefs)]
+            self,
+            move |_| {
+                if let Some(sender) = prefs.imp().sender.get() {
+                    let _ = sender.try_send(Action::ConfigureGlobalShortcuts);
+                }
+            }
+        ));
     }
 
     fn bind_settings(&self) {
@@ -84,12 +103,6 @@ impl NeteaseCloudMusicGtk4Preferences {
     }
 }
 
-impl Default for NeteaseCloudMusicGtk4Preferences {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
 mod imp {
 
     use adw::subclass::prelude::*;
@@ -100,6 +113,7 @@ mod imp {
     #[template(resource = "/com/gitee/gmg137/NeteaseCloudMusicGtk4/gtk/preferences.ui")]
     pub struct NeteaseCloudMusicGtk4Preferences {
         pub settings: OnceCell<Settings>,
+        pub sender: OnceCell<Sender<Action>>,
         #[template_child]
         pub exit_switch: TemplateChild<Switch>,
         #[template_child]
@@ -114,6 +128,8 @@ mod imp {
         pub cache_clear: TemplateChild<adw::ComboRow>,
         #[template_child]
         pub desktop_lyrics: TemplateChild<Switch>,
+        #[template_child]
+        pub global_shortcut_button: TemplateChild<Button>,
     }
 
     #[glib::object_subclass]
@@ -138,6 +154,7 @@ mod imp {
 
             obj.setup_settings();
             obj.bind_settings();
+            obj.setup_global_shortcuts();
         }
     }
     impl WidgetImpl for NeteaseCloudMusicGtk4Preferences {}

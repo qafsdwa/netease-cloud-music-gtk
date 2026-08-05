@@ -54,6 +54,8 @@ pub enum Action {
     Play(SongInfo),
     PlayStart(SongInfo),
     TogglePlayPause,
+    VolumeUp,
+    VolumeDown,
     // (歌单, 是否立即播放)
     AddPlayList(Vec<SongInfo>, bool),
     PlayListStart,
@@ -134,6 +136,9 @@ pub enum Action {
     UpdateTraySongTitle(String, String, u64),
     ShowMainWindow,
     ShowPlayerBar,
+
+    // global shortcuts
+    ConfigureGlobalShortcuts,
 }
 
 mod imp {
@@ -255,6 +260,7 @@ impl NeteaseCloudMusicGtk4Application {
             window.imp().graceful_quitting.set(true);
             window.imp().player_controls.save_current_state();
             window.imp().tray_handle.borrow_mut().stop();
+            window.imp().global_shortcut.borrow_mut().stop();
         }
         self.quit();
     }
@@ -916,6 +922,12 @@ impl NeteaseCloudMusicGtk4Application {
             Action::TogglePlayPause => {
                 window.toggle_play_pause();
             }
+            Action::VolumeUp => {
+                window.volume_up();
+            }
+            Action::VolumeDown => {
+                window.volume_down();
+            }
             Action::LikeSongList(id, is_like, callback) => {
                 let sender = imp.sender.clone();
                 MAINCONTEXT.spawn_local_with_priority(Priority::DEFAULT_IDLE, async move {
@@ -1355,6 +1367,16 @@ impl NeteaseCloudMusicGtk4Application {
             Action::ShowPlayerBar => {
                 window.show_player_bar();
             }
+            Action::ConfigureGlobalShortcuts => {
+                if !window.configure_global_shortcuts() {
+                    let sender = imp.sender.clone();
+                    sender
+                        .send_blocking(Action::AddToast(gettext(
+                            "Global shortcuts are not supported on this system",
+                        )))
+                        .unwrap();
+                }
+            }
             Action::Quit => unreachable!("quit is handled before window lookup"),
         }
         glib::ControlFlow::Continue
@@ -1394,7 +1416,7 @@ impl NeteaseCloudMusicGtk4Application {
 
     fn show_prefrerences(&self) {
         let window = self.active_window().unwrap();
-        let preferences = NeteaseCloudMusicGtk4Preferences::new();
+        let preferences = NeteaseCloudMusicGtk4Preferences::new(self.imp().sender.clone());
 
         let (size, unit) = crate::path::get_cache_size();
         preferences.set_cache_size_label(size, unit);
